@@ -157,11 +157,7 @@ claude.api.key=여기에_키_입력
 
 ### 3. MySQL DB 생성
 
-```sql
-CREATE DATABASE kpop_radio
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-```
+sql폴더 확인
 
 ### 4. 서버 실행 후 Swagger 확인
 
