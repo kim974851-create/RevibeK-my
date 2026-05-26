@@ -3,10 +3,11 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.ssafy.revibek.model.dao.SongDao">
+<mapper namespace="com.ssafy.revibek.song.mapper.SongDao">
+
 
     <!-- ResultMap — DB 컬럼 ↔ DTO 필드 매핑 -->
-    <resultMap id="SongResultMap" type="com.ssafy.revibek.model.dto.SongDto">
+	<resultMap id="SongResultMap" type="com.ssafy.revibek.song.dto.SongDto">
         <id     property="id"              column="id"/>
         <result property="title"           column="title"/>
         <result property="artist"          column="artist"/>
@@ -25,7 +26,7 @@
     </resultMap>
 
     <!-- 노래 등록 -->
-    <insert id="insertSong" parameterType="com.ssafy.revibek.model.dto.SongDto">
+    <insert id="insertSong" parameterType="com.ssafy.revibek.song.dto.SongDto">
         INSERT INTO songs (
             id, title, artist, genre, era, type,
             youtube_url, youtube_id,
@@ -80,7 +81,7 @@
     </select>
 
     <!-- 노래 정보 수정 -->
-    <update id="updateSong" parameterType="com.ssafy.revibek.model.dto.SongDto">
+    <update id="updateSong" parameterType="com.ssafy.revibek.song.dto.SongDto">
         UPDATE songs
         SET
             title           = #{title},

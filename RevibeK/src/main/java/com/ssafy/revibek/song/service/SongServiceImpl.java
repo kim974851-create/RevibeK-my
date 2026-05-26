@@ -1,12 +1,12 @@
-package com.ssafy.revibek.model.service;
+package com.ssafy.revibek.song.service;
 
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.ssafy.revibek.model.dao.SongDao;
-import com.ssafy.revibek.model.dto.SongDto;
+import com.ssafy.revibek.song.dto.SongDto;
+import com.ssafy.revibek.song.mapper.SongDao;
 
 @Service
 public class SongServiceImpl implements SongService {

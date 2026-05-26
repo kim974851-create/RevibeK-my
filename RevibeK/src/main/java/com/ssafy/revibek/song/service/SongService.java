@@ -1,7 +1,8 @@
-package com.ssafy.revibek.model.service;
+package com.ssafy.revibek.song.service;
 
 import java.util.List;
-import com.ssafy.revibek.model.dto.SongDto;
+
+import com.ssafy.revibek.song.dto.SongDto;
 
 public interface SongService {
     int registerSong(SongDto song);

@@ -1,10 +1,10 @@
-package com.ssafy.revibek.model.dao;
+package com.ssafy.revibek.song.mapper;
 
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 
-import com.ssafy.revibek.model.dto.SongDto;
+import com.ssafy.revibek.song.dto.SongDto;
 
 @Mapper
 public interface SongDao {

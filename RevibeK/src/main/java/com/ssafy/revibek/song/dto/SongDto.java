@@ -1,4 +1,4 @@
-package com.ssafy.revibek.model.dto;
+package com.ssafy.revibek.song.dto;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,4 @@
-package com.ssafy.revibek.controller;
+package com.ssafy.revibek.song.controller;
 
 import java.util.List;
 
@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ssafy.revibek.model.dto.SongDto;
-import com.ssafy.revibek.model.service.SongService;
+import com.ssafy.revibek.song.dto.SongDto;
+import com.ssafy.revibek.song.service.SongService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
