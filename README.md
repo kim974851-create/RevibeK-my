@@ -45,12 +45,12 @@ hotfix/*    → 긴급 버그 수정
 
 | 브랜치 | 담당 | 내용 |
 |---|---|---|
-| feature/song | A | 노래 CRUD · 검색 |
-| feature/recommend | A | 추천 엔진 · 점수 계산 |
-| feature/playlist | A | 플레이리스트 |
-| feature/user | B | 유저 · 인증 · OAuth2 |
-| feature/radio | B | AI 라디오 · TTS |
-| feature/user-song | B | 보관함 · 저장 · 평가 |
+| feature/song | 김형수 | 노래 CRUD · 검색 |
+| feature/recommend | 김형수 | 추천 엔진 · 점수 계산 |
+| feature/playlist | 김형수 | 플레이리스트 |
+| feature/user | 김재원 | 유저 · 인증 · OAuth2 |
+| feature/radio | 김재원 | AI 라디오 · TTS |
+| feature/user-song | 김재원 | 보관함 · 저장 · 평가 |
 
 ---
 
@@ -220,5 +220,5 @@ GitHub에서 `feature/user → develop` 으로 PR 생성해요.
 
 | 이름 | 역할 | 담당 |
 |---|---|---|
-| A | 백엔드 | 노래 · 추천 · 플레이리스트 |
-| B | 백엔드 | 유저 · 라디오 · 보관함 |
+| 김형수 | 백엔드 | 노래 · 추천 · 플레이리스트 |
+| 김재원 | 백엔드 | 유저 · 라디오 · 보관함 |
