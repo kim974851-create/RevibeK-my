@@ -152,6 +152,33 @@ CREATE TABLE playlist_songs (
   INDEX idx_playlist_order (playlist_id, order_num)
 ) ENGINE=InnoDB COMMENT='플레이리스트 구성 곡';
 
+-- 9. 채널 테이블
+CREATE TABLE youtube_channels (
+  id                CHAR(36)      NOT NULL DEFAULT (UUID()),
+  url               VARCHAR(255)  NOT NULL,
+  channel_id        VARCHAR(50)   UNIQUE,
+  channel_name      VARCHAR(255),
+  uploads_playlist  VARCHAR(60),
+  subscriber_count  BIGINT,
+  last_checked_at   DATETIME,
+  created_at        DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB COMMENT='유튜브 채널 목록';
+
+-- 10. 크롤링된 영상 후보 테이블 (songs 반영 전 대기열)
+CREATE TABLE youtube_videos_raw (
+  id            CHAR(36)      NOT NULL DEFAULT (UUID()),
+  channel_id    VARCHAR(50)   NOT NULL,
+  video_id      VARCHAR(20)   NOT NULL UNIQUE,  -- 중복 방지
+  title         VARCHAR(500),
+  published_at  DATETIME,
+  is_imported   TINYINT(1)    NOT NULL DEFAULT 0  COMMENT 'songs 테이블 반영 여부',
+  fetched_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  FOREIGN KEY (channel_id) REFERENCES youtube_channels(channel_id),
+  INDEX idx_imported (is_imported),
+  INDEX idx_published (published_at DESC)
+) ENGINE=InnoDB COMMENT='유튜브 영상 수집 대기열';
 
 -- ============================================
 -- MOCK DATA — 목업 데이터 INSERT
