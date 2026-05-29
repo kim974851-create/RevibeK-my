@@ -29,7 +29,7 @@
 
 	<select id="selectUserByEmail" parameterType="string"
 		resultType="com.ssafy.revibek.user.dto.UserResponseDto">
-		SELECT id, nickname, email, provider
+		SELECT id, nickname, email, provider, provider_id
 		FROM users
 		WHERE email = #{email}
 	</select>
@@ -46,5 +46,23 @@
 		WHERE id
 		= #{id}
 	</delete>
+
+	
+
+
+	<insert id="insertSocialUser"
+		parameterType="com.ssafy.revibek.user.dto.UserResponseDto">
+		INSERT INTO users (nickname, email, provider,
+		provider_id)
+		VALUES (#{nickname}, #{email}, #{provider}, #{providerId})
+	</insert>
+
+
+
+
+
+
+
+
 
 </mapper>

@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 public class UserSongService {
 
 	
-	private final UserSongMapper userSongMapper;
+	private  UserSongMapper userSongMapper;
 
 	//노래 저장
 	public void saveSong(UserSongRequestDto dto) {
