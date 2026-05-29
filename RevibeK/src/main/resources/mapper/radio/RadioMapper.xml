@@ -5,145 +5,44 @@
 
 <mapper namespace="com.ssafy.revibek.radio.mapper.RadioMapper">
 
-    <!-- 라디오 세션 생성 -->
-    <insert id="insertRadioSession" parameterType="map">
-        INSERT INTO radio_sessions 
-            (id, user_id, mood, story, dj_ment, comfort_text, novel_excerpt, created_at)
-        VALUES 
-            (#{sessionId}, #{userId}, #{mood}, #{story}, #{djMent}, #{comfortText}, #{novelExcerpt}, NOW())
+    <!-- 세션 저장 -->
+    <insert id="insertSession"
+        parameterType="com.ssafy.revibek.radio.dto.RadioRequestDto">
+        INSERT INTO radio_sessions (user_id, mood, story)
+        VALUES (#{userId}, #{mood}, #{story})
     </insert>
 
-    <!-- 단일 세션 조회 (추천곡 포함) -->
-    <select id="selectRadioSessionById" parameterType="string" resultMap="radioSessionWithSongsMap">
-        SELECT 
-            rs.id, rs.user_id, rs.mood, rs.story, 
-            rs.dj_ment, rs.comfort_text, rs.novel_excerpt, rs.created_at,
-            rr.id AS rr_id, rr.song_id, rr.order_num, rr.reason,
-            s.title, s.artist
-        FROM radio_sessions rs
-        LEFT JOIN radio_recommendations rr ON rs.id = rr.session_id
-        LEFT JOIN songs s ON rr.song_id = s.id
-        WHERE rs.id = #{sessionId}
-        ORDER BY rr.order_num ASC
+    <!-- 세션 조회 -->
+    <select id="selectSessionById" parameterType="string"
+        resultType="com.ssafy.revibek.radio.dto.RadioResponseDto">
+        SELECT id, mood, story, dj_ment, comfort_text, novel_excerpt, created_at
+        FROM radio_sessions
+        WHERE id = #{id}
     </select>
 
-    <!-- 유저별 세션 목록 조회 (페이징) -->
-    <select id="selectRadioSessionsByUserId" parameterType="map" resultMap="radioSessionWithSongsMap">
-        SELECT 
-            rs.id, rs.user_id, rs.mood, rs.story, 
-            rs.dj_ment, rs.comfort_text, rs.novel_excerpt, rs.created_at,
-            rr.id AS rr_id, rr.song_id, rr.order_num, rr.reason,
-            s.title, s.artist
-        FROM radio_sessions rs
-        LEFT JOIN radio_recommendations rr ON rs.id = rr.session_id
-        LEFT JOIN songs s ON rr.song_id = s.id
-        WHERE rs.user_id = #{userId}
-        ORDER BY rs.created_at DESC, rr.order_num ASC
-        LIMIT #{limit} OFFSET #{offset}
-    </select>
-
-    <!-- 유저별 세션 총 개수 -->
-    <select id="countRadioSessionsByUserId" parameterType="string" resultType="int">
-        SELECT COUNT(*) FROM radio_sessions WHERE user_id = #{userId}
-    </select>
-
-    <!-- 라디오 세션 삭제 -->
-    <delete id="deleteRadioSession" parameterType="string">
-        DELETE FROM radio_sessions WHERE id = #{sessionId}
-    </delete>
-
-    <!-- 유저의 모든 라디오 세션 삭제 -->
-    <delete id="deleteAllRadioSessionsByUserId" parameterType="string">
-        DELETE FROM radio_sessions WHERE user_id = #{userId}
-    </delete>
-
-    <!-- 최근 기분 조회 -->
-    <select id="selectLastMoodByUserId" parameterType="string" resultType="com.ssafy.revibek.radio.dto.Mood">
-        SELECT mood FROM radio_sessions 
+    <!-- 유저의 세션 목록 -->
+    <select id="selectSessionsByUserId" parameterType="string"
+        resultType="com.ssafy.revibek.radio.dto.RadioResponseDto">
+        SELECT id, mood, story, dj_ment, comfort_text, novel_excerpt, created_at
+        FROM radio_sessions
         WHERE user_id = #{userId}
         ORDER BY created_at DESC
-        LIMIT 1
     </select>
 
-    <!-- 추천곡 단일 삽입 -->
-    <insert id="insertRecommendation" parameterType="map">
-        INSERT INTO radio_recommendations 
-            (id, session_id, song_id, order_num, reason)
-        VALUES 
-            (UUID(), #{sessionId}, #{songId}, #{orderNum}, #{reason})
+    <!-- 추천곡 저장 -->
+    <insert id="insertRecommendation">
+        INSERT INTO radio_recommendations (session_id, song_id, order_num, reason)
+        VALUES (#{sessionId}, #{songId}, #{orderNum}, #{reason})
     </insert>
 
-    <!-- 추천곡 배치 삽입 -->
-    <insert id="insertRecommendationBatch" parameterType="list">
-        INSERT INTO radio_recommendations 
-            (id, session_id, song_id, order_num, reason)
-        VALUES
-        <foreach collection="list" item="item" separator=",">
-            (UUID(), #{item.sessionId}, #{item.songId}, #{item.orderNum}, #{item.reason})
-        </foreach>
-    </insert>
-
-    <!-- 세션별 추천곡 목록 조회 -->
-    <select id="selectRecommendationsBySessionId" parameterType="string" resultMap="radioSongMap">
-        SELECT 
-            s.id AS songId, s.title, s.artist, rr.order_num, rr.reason
+    <!-- 세션별 추천곡 조회 -->
+    <select id="selectRecommendationsBySessionId" parameterType="string"
+        resultType="com.ssafy.revibek.radio.dto.RadioResponseDto$RadioSongDto">
+        SELECT rr.song_id, s.title, s.artist, rr.order_num, rr.reason
         FROM radio_recommendations rr
         JOIN songs s ON s.id = rr.song_id
         WHERE rr.session_id = #{sessionId}
-        ORDER BY rr.order_num ASC
+        ORDER BY rr.order_num
     </select>
-
-    <!-- 기분별 통계 조회 -->
-    <select id="selectMoodStatistics" resultMap="moodStatisticsMap">
-        SELECT 
-            rs.mood,
-            COUNT(rs.id) AS sessionCount,
-            COALESCE(AVG(s.score), 0) AS avgSongScore,
-            COUNT(rr.id) AS totalRecommendations
-        FROM radio_sessions rs
-        LEFT JOIN radio_recommendations rr ON rs.id = rr.session_id
-        LEFT JOIN songs s ON rr.song_id = s.id
-        GROUP BY rs.mood
-        ORDER BY sessionCount DESC
-    </select>
-
-    <!-- ===== ResultMaps ===== -->
-
-    <!-- 라디오 세션 + 추천곡 조회 ResultMap -->
-    <resultMap id="radioSessionWithSongsMap" type="com.ssafy.revibek.radio.dto.RadioResponseDto">
-        <id column="id" property="id" />
-        <result column="mood" property="mood" typeHandler="org.apache.ibatis.type.EnumTypeHandler" />
-        <result column="story" property="story" />
-        <result column="dj_ment" property="djMent" />
-        <result column="comfort_text" property="comfortText" />
-        <result column="novel_excerpt" property="novelExcerpt" />
-        <result column="created_at" property="createdAt" />
-        
-        <collection property="songs" ofType="com.ssafy.revibek.radio.dto.RadioResponseDto$RadioSongDto" 
-                     notNullColumn="rr_id">
-            <result column="song_id" property="songId" />
-            <result column="title" property="title" />
-            <result column="artist" property="artist" />
-            <result column="order_num" property="orderNum" />
-            <result column="reason" property="reason" />
-        </collection>
-    </resultMap>
-
-    <!-- 추천곡 ResultMap -->
-    <resultMap id="radioSongMap" type="com.ssafy.revibek.radio.dto.RadioResponseDto$RadioSongDto">
-        <result column="songId" property="songId" />
-        <result column="title" property="title" />
-        <result column="artist" property="artist" />
-        <result column="order_num" property="orderNum" />
-        <result column="reason" property="reason" />
-    </resultMap>
-
-    <!-- 기분별 통계 ResultMap -->
-    <resultMap id="moodStatisticsMap" type="com.ssafy.revibek.radio.dto.MoodstatisticsDto">
-        <result column="mood" property="mood" typeHandler="org.apache.ibatis.type.EnumTypeHandler" />
-        <result column="sessionCount" property="sessionCount" />
-        <result column="avgSongScore" property="avgSongScore" />
-        <result column="totalRecommendations" property="totalRecommendations" />
-    </resultMap>
 
 </mapper>

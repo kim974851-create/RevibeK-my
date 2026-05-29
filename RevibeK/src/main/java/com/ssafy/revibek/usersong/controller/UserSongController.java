@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserSongController {
 	
-	private  UserSongService userSongService;
+	private final UserSongService userSongService;
 
 	//노래저장
 	@PostMapping

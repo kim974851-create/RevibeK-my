@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UserController {
 
-    private  UserService userService;
+    private final UserService userService;
 
     // 회원가입
     @PostMapping("/signup")
@@ -49,4 +49,4 @@ public class UserController {
         userService.deleteUser(id);
         return ResponseEntity.ok("삭제 완료");
     }
-}	
+}
