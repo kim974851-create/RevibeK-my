@@ -23,15 +23,20 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenStore refreshTokenStore;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public void signUp(UserRegisterRequestDto dto) {
+        if (!emailVerificationService.isVerified(dto.getEmail())) {
+            throw new RuntimeException("회원가입 전 이메일 인증이 필요합니다.");
+        }
         UserAuthDto existing = userMapper.selectUserAuthByEmail(dto.getEmail());
         if (existing != null) {
             throw new RuntimeException("이미 사용중인 이메일입니다.");
         }
         String passwordHash = passwordEncoder.encode(dto.getPassword());
         userMapper.insertLocalUser(dto.getNickname(), dto.getEmail(), passwordHash);
+        emailVerificationService.consumeVerification(dto.getEmail());
     }
 
     public AuthTokenResponseDto login(UserLoginRequestDto dto) {

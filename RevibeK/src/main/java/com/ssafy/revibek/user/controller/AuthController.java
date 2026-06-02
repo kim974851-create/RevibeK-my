@@ -9,9 +9,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ssafy.revibek.auth.dto.AuthTokenResponseDto;
 import com.ssafy.revibek.auth.dto.LogoutRequestDto;
 import com.ssafy.revibek.auth.dto.RefreshTokenRequestDto;
+import com.ssafy.revibek.user.dto.EmailVerificationCheckRequestDto;
+import com.ssafy.revibek.user.dto.EmailVerificationSendRequestDto;
 import com.ssafy.revibek.user.dto.UserLoginRequestDto;
 import com.ssafy.revibek.user.dto.UserRegisterRequestDto;
 import com.ssafy.revibek.user.service.AuthService;
+import com.ssafy.revibek.user.service.EmailVerificationService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,19 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailVerificationService emailVerificationService;
+
+    @PostMapping("/email/send")
+    public ResponseEntity<String> sendVerificationCode(@Valid @RequestBody EmailVerificationSendRequestDto dto) {
+        emailVerificationService.sendVerificationCode(dto.getEmail());
+        return ResponseEntity.ok("인증코드 발송 완료");
+    }
+
+    @PostMapping("/email/verify")
+    public ResponseEntity<String> verifyEmailCode(@Valid @RequestBody EmailVerificationCheckRequestDto dto) {
+        emailVerificationService.verifyCode(dto.getEmail(), dto.getCode());
+        return ResponseEntity.ok("이메일 인증 완료");
+    }
 
     @PostMapping("/signup")
     public ResponseEntity<String> signUp(@Valid @RequestBody UserRegisterRequestDto dto) {
