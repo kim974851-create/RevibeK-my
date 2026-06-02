@@ -1,6 +1,7 @@
 package com.ssafy.revibek.user.service;
 
 import java.time.Instant;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -28,16 +29,18 @@ public class EmailVerificationService {
     private final Map<String, Instant> verifiedEmailStore = new ConcurrentHashMap<>();
 
     public void sendVerificationCode(String email) {
+        String normalizedEmail = normalizeEmail(email);
+        if (senderEmail.isBlank()) {
+            throw new RuntimeException("SMTP 발송 계정 설정이 필요합니다.");
+        }
         cleanupExpiredEntries();
         String code = generateCode();
         Instant expiresAt = Instant.now().plusSeconds(CODE_TTL_SECONDS);
-        codeStore.put(email, new VerificationCodeEntry(code, expiresAt));
+        codeStore.put(normalizedEmail, new VerificationCodeEntry(code, expiresAt));
 
         SimpleMailMessage message = new SimpleMailMessage();
-        if (!senderEmail.isBlank()) {
-            message.setFrom(senderEmail);
-        }
-        message.setTo(email);
+        message.setFrom(senderEmail);
+        message.setTo(normalizedEmail);
         message.setSubject("[RevibeK] 이메일 인증코드");
         message.setText(
             "아래 인증코드를 입력해주세요.\n\n" +
@@ -48,26 +51,28 @@ public class EmailVerificationService {
     }
 
     public void verifyCode(String email, String code) {
+        String normalizedEmail = normalizeEmail(email);
         cleanupExpiredEntries();
-        VerificationCodeEntry entry = codeStore.get(email);
+        VerificationCodeEntry entry = codeStore.get(normalizedEmail);
         if (entry == null) {
             throw new RuntimeException("인증코드가 없거나 만료되었습니다.");
         }
         if (!entry.code().equals(code)) {
             throw new RuntimeException("인증코드가 올바르지 않습니다.");
         }
-        codeStore.remove(email);
-        verifiedEmailStore.put(email, Instant.now().plusSeconds(VERIFIED_TTL_SECONDS));
+        codeStore.remove(normalizedEmail);
+        verifiedEmailStore.put(normalizedEmail, Instant.now().plusSeconds(VERIFIED_TTL_SECONDS));
     }
 
     public boolean isVerified(String email) {
+        String normalizedEmail = normalizeEmail(email);
         cleanupExpiredEntries();
-        Instant verifiedUntil = verifiedEmailStore.get(email);
+        Instant verifiedUntil = verifiedEmailStore.get(normalizedEmail);
         return verifiedUntil != null && verifiedUntil.isAfter(Instant.now());
     }
 
     public void consumeVerification(String email) {
-        verifiedEmailStore.remove(email);
+        verifiedEmailStore.remove(normalizeEmail(email));
     }
 
     private void cleanupExpiredEntries() {
@@ -79,6 +84,10 @@ public class EmailVerificationService {
     private String generateCode() {
         int value = ThreadLocalRandom.current().nextInt(100000, 1000000);
         return Integer.toString(value);
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
     }
 
     private record VerificationCodeEntry(String code, Instant expiresAt) {

@@ -14,6 +14,7 @@ import com.ssafy.revibek.user.dto.UserResponseDto;
 import com.ssafy.revibek.user.mapper.UserMapper;
 
 import lombok.RequiredArgsConstructor;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -27,20 +28,21 @@ public class AuthService {
 
     @Transactional
     public void signUp(UserRegisterRequestDto dto) {
-        if (!emailVerificationService.isVerified(dto.getEmail())) {
+        String email = normalizeEmail(dto.getEmail());
+        if (!emailVerificationService.isVerified(email)) {
             throw new RuntimeException("회원가입 전 이메일 인증이 필요합니다.");
         }
-        UserAuthDto existing = userMapper.selectUserAuthByEmail(dto.getEmail());
+        UserAuthDto existing = userMapper.selectUserAuthByEmail(email);
         if (existing != null) {
             throw new RuntimeException("이미 사용중인 이메일입니다.");
         }
         String passwordHash = passwordEncoder.encode(dto.getPassword());
-        userMapper.insertLocalUser(dto.getNickname(), dto.getEmail(), passwordHash);
-        emailVerificationService.consumeVerification(dto.getEmail());
+        userMapper.insertLocalUser(dto.getNickname(), email, passwordHash);
+        emailVerificationService.consumeVerification(email);
     }
 
     public AuthTokenResponseDto login(UserLoginRequestDto dto) {
-        UserAuthDto user = userMapper.selectUserAuthByEmail(dto.getEmail());
+        UserAuthDto user = userMapper.selectUserAuthByEmail(normalizeEmail(dto.getEmail()));
         if (user == null || user.getPasswordHash() == null) {
             throw new RuntimeException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
@@ -52,7 +54,8 @@ public class AuthService {
 
     @Transactional
     public AuthTokenResponseDto loginWithGoogle(String email, String providerId, String nickname) {
-        if (email == null || providerId == null) {
+        email = normalizeEmail(email);
+        if (email == null || email.isBlank() || providerId == null || providerId.isBlank()) {
             throw new RuntimeException("Google 인증 정보가 올바르지 않습니다.");
         }
 
@@ -121,5 +124,9 @@ public class AuthService {
             jwtTokenProvider.getAccessTokenExpirationMs(),
             responseUser
         );
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
 }
