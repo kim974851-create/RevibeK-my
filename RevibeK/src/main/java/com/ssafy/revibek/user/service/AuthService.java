@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ssafy.revibek.auth.JwtTokenProvider;
+import com.ssafy.revibek.auth.RefreshTokenStore;
 import com.ssafy.revibek.auth.dto.AuthTokenResponseDto;
 import com.ssafy.revibek.user.dto.UserAuthDto;
 import com.ssafy.revibek.user.dto.UserLoginRequestDto;
@@ -21,6 +22,7 @@ public class AuthService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenStore refreshTokenStore;
 
     @Transactional
     public void signUp(UserRegisterRequestDto dto) {
@@ -67,7 +69,13 @@ public class AuthService {
         if (!jwtTokenProvider.validateToken(refreshToken)) {
             throw new RuntimeException("유효하지 않은 refresh token 입니다.");
         }
+        if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
+            throw new RuntimeException("refresh token 타입이 아닙니다.");
+        }
         String userId = jwtTokenProvider.getUserId(refreshToken);
+        if (!refreshTokenStore.isValid(userId, refreshToken)) {
+            throw new RuntimeException("로그아웃되었거나 만료된 refresh token 입니다.");
+        }
         UserResponseDto user = userMapper.selectUserById(userId);
         if (user == null) {
             throw new RuntimeException("존재하지 않는 유저입니다.");
@@ -76,6 +84,7 @@ public class AuthService {
         if (authDto == null) {
             throw new RuntimeException("유저 인증 정보를 찾을 수 없습니다.");
         }
+        refreshTokenStore.revoke(refreshToken);
         return issueTokens(authDto);
     }
 
@@ -83,12 +92,16 @@ public class AuthService {
         if (!jwtTokenProvider.validateToken(refreshToken)) {
             throw new RuntimeException("유효하지 않은 refresh token 입니다.");
         }
-        // 서버 저장소 기반 revoke를 도입하면 여기서 처리한다.
+        if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
+            throw new RuntimeException("refresh token 타입이 아닙니다.");
+        }
+        refreshTokenStore.revoke(refreshToken);
     }
 
     private AuthTokenResponseDto issueTokens(UserAuthDto user) {
         String accessToken = jwtTokenProvider.createAccessToken(user);
         String refreshToken = jwtTokenProvider.createRefreshToken(user);
+        refreshTokenStore.save(user.getId(), refreshToken);
         UserResponseDto responseUser = new UserResponseDto(
             user.getId(),
             user.getNickname(),
