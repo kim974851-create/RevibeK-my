@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/radio")
@@ -17,9 +18,13 @@ public class RadioController {
 
     // 라디오 세션 생성
     @PostMapping
-    public ResponseEntity<String> createSession(@RequestBody RadioRequestDto dto) {
-        radioService.createSession(dto);
-        return ResponseEntity.ok("세션 생성 완료");
+    public ResponseEntity<Map<String, String>> createSession(@RequestBody RadioRequestDto dto) {
+        // [FIX] 생성 결과로 sessionId를 응답해 프론트가 후속 조회/재생성에 활용 가능하게 수정.
+        String sessionId = radioService.createSession(dto);
+        return ResponseEntity.ok(Map.of(
+                "message", "세션 생성 완료",
+                "sessionId", sessionId
+        ));
     }
 
     // 세션 단건 조회

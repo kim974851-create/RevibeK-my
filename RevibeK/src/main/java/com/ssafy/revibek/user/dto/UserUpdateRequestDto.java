@@ -9,16 +9,12 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserLoginRequestDto {
-	
-	@NotBlank(message = "email은 필수입니다.")
-	@Email(message = "올바른 email 형식이 아닙니다.")
-	private String email;
-	@NotBlank(message = "password는 필수입니다.")
-	private String password;
-	
+public class UserUpdateRequestDto {
 
-	
-	
+    @NotBlank(message = "nickname은 필수입니다.")
+    private String nickname;
 
+    @NotBlank(message = "email은 필수입니다.")
+    @Email(message = "올바른 email 형식이 아닙니다.")
+    private String email;
 }
