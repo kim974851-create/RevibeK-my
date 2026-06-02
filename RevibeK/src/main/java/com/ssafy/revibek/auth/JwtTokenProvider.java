@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import com.ssafy.revibek.user.dto.UserAuthDto;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -19,6 +20,8 @@ import lombok.Getter;
 
 @Component
 public class JwtTokenProvider {
+    public static final String TOKEN_TYPE_ACCESS = "access";
+    public static final String TOKEN_TYPE_REFRESH = "refresh";
 
     @Value("${jwt.secret}")
     private String secret;
@@ -42,11 +45,11 @@ public class JwtTokenProvider {
     }
 
     public String createAccessToken(UserAuthDto user) {
-        return createToken(user, accessTokenExpirationMs);
+        return createToken(user, accessTokenExpirationMs, TOKEN_TYPE_ACCESS);
     }
 
     public String createRefreshToken(UserAuthDto user) {
-        return createToken(user, refreshTokenExpirationMs);
+        return createToken(user, refreshTokenExpirationMs, TOKEN_TYPE_REFRESH);
     }
 
     public String getUserId(String token) {
@@ -58,6 +61,15 @@ public class JwtTokenProvider {
         return email == null ? null : email.toString();
     }
 
+    public String getTokenType(String token) {
+        Object tokenType = parseToken(token).get("tokenType");
+        return tokenType == null ? null : tokenType.toString();
+    }
+
+    public boolean isRefreshToken(String token) {
+        return TOKEN_TYPE_REFRESH.equals(getTokenType(token));
+    }
+
     public boolean validateToken(String token) {
         try {
             parseToken(token);
@@ -67,7 +79,7 @@ public class JwtTokenProvider {
         }
     }
 
-    private String createToken(UserAuthDto user, long expiresInMs) {
+    private String createToken(UserAuthDto user, long expiresInMs, String tokenType) {
         Instant now = Instant.now();
         Instant expiration = now.plusMillis(expiresInMs);
 
@@ -75,13 +87,14 @@ public class JwtTokenProvider {
             .subject(user.getId())
             .claim("email", user.getEmail())
             .claim("provider", user.getProvider())
+            .claim("tokenType", tokenType)
             .issuedAt(Date.from(now))
             .expiration(Date.from(expiration))
             .signWith(secretKey)
             .compact();
     }
 
-    private io.jsonwebtoken.Claims parseToken(String token) {
+    private Claims parseToken(String token) {
         return Jwts.parser()
             .verifyWith(secretKey)
             .build()

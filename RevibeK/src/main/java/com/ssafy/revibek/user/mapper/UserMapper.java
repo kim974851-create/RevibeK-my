@@ -15,12 +15,12 @@ public interface UserMapper {
 	void insertGoogleUser(@Param("nickname") String nickname,
 						  @Param("email") String email,
 						  @Param("providerId") String providerId);
-	UserResponseDto selectUserById(String id);
-	UserAuthDto selectUserAuthByEmail(String email);
+	UserResponseDto selectUserById(@Param("id") String id);
+	UserAuthDto selectUserAuthByEmail(@Param("email") String email);
 	void updateUser(@Param("id") String id,
 					@Param("nickname") String nickname,
 					@Param("email") String email);
-	void deleteUser(String id);
+	void deleteUser(@Param("id") String id);
 	
 
 }
