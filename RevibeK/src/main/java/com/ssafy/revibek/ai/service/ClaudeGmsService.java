@@ -1,5 +1,7 @@
 package com.ssafy.revibek.ai.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +10,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+import com.ssafy.revibek.ai.dto.AiChatResponseDto;
 import com.ssafy.revibek.ai.dto.external.ClaudeMessageRequestDto;
 import com.ssafy.revibek.ai.dto.external.ClaudeMessageResponseDto;
 
@@ -18,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class ClaudeGmsService {
 
     private final RestClient.Builder restClientBuilder;
+    private final GmsCreditBudgetTracker budgetTracker;
 
     @Value("${gms.api.base-url}")
     private String baseUrl;
@@ -34,9 +38,21 @@ public class ClaudeGmsService {
     @Value("${gms.api.max-tokens:300}")
     private int defaultMaxTokens;
 
-    public String generateText(String prompt, String system, Integer maxTokens) {
+    @Value("${gms.api.budget-credit:30}")
+    private BigDecimal budgetCredit;
+
+    @Value("${gms.api.input-cost-per-1k:0.03}")
+    private BigDecimal inputCostPer1k;
+
+    @Value("${gms.api.output-cost-per-1k:0.15}")
+    private BigDecimal outputCostPer1k;
+
+    public AiChatResponseDto generateText(String prompt, String system, Integer maxTokens) {
         if (!StringUtils.hasText(apiKey)) {
             throw new RuntimeException("GMS API 키가 비어 있습니다.");
+        }
+        if (budgetTracker.getSpent().compareTo(budgetCredit) >= 0) {
+            throw new RuntimeException("GMS 예산 " + budgetCredit + " 크레딧을 모두 사용했습니다.");
         }
 
         ClaudeMessageRequestDto request = new ClaudeMessageRequestDto(
@@ -65,11 +81,37 @@ public class ClaudeGmsService {
             throw new RuntimeException("Claude 응답이 비어 있습니다.");
         }
 
-        return response.getContent().stream()
+        String text = response.getContent().stream()
             .filter(content -> "text".equals(content.getType()))
             .map(ClaudeMessageResponseDto.ContentBlock::getText)
             .filter(StringUtils::hasText)
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Claude 텍스트 응답을 찾을 수 없습니다."));
+
+        long inputTokens = response.getUsage() == null ? 0L : response.getUsage().getInputTokens();
+        long outputTokens = response.getUsage() == null ? 0L : response.getUsage().getOutputTokens();
+        BigDecimal requestCost = calculateRequestCost(inputTokens, outputTokens);
+        BigDecimal totalSpent = budgetTracker.add(requestCost);
+        BigDecimal remainingBudget = budgetCredit.subtract(totalSpent);
+        if (remainingBudget.compareTo(BigDecimal.ZERO) < 0) {
+            remainingBudget = BigDecimal.ZERO;
+        }
+
+        return new AiChatResponseDto(
+            text,
+            requestCost.doubleValue(),
+            totalSpent.doubleValue(),
+            remainingBudget.doubleValue()
+        );
+    }
+
+    private BigDecimal calculateRequestCost(long inputTokens, long outputTokens) {
+        BigDecimal inputCost = BigDecimal.valueOf(inputTokens)
+            .multiply(inputCostPer1k)
+            .divide(BigDecimal.valueOf(1000L), 6, RoundingMode.HALF_UP);
+        BigDecimal outputCost = BigDecimal.valueOf(outputTokens)
+            .multiply(outputCostPer1k)
+            .divide(BigDecimal.valueOf(1000L), 6, RoundingMode.HALF_UP);
+        return inputCost.add(outputCost);
     }
 }

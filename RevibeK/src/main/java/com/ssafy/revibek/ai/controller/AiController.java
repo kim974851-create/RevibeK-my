@@ -22,11 +22,11 @@ public class AiController {
 
     @PostMapping("/chat")
     public ResponseEntity<AiChatResponseDto> chat(@Valid @RequestBody AiChatRequestDto request) {
-        String text = claudeGmsService.generateText(
+        AiChatResponseDto response = claudeGmsService.generateText(
             request.prompt(),
             request.system(),
             request.maxTokens()
         );
-        return ResponseEntity.ok(new AiChatResponseDto(text));
+        return ResponseEntity.ok(response);
     }
 }
