@@ -93,6 +93,27 @@
 			<version>4.0.1</version>
 			<scope>test</scope>
 		</dependency>
+		<!-- Qdrant Java client -->
+		<dependency>
+		    <groupId>io.qdrant</groupId>
+		    <artifactId>client</artifactId>
+		    <version>1.13.0</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.google.protobuf</groupId>
+		    <artifactId>protobuf-java</artifactId>
+		    <version>4.29.3</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.google.guava</groupId>
+		    <artifactId>guava</artifactId>
+		    <version>33.4.0-jre</version>
+		</dependency>
+		<dependency>
+		    <groupId>io.grpc</groupId>
+		    <artifactId>grpc-stub</artifactId>
+		    <version>1.71.0</version>
+		</dependency>
 		<!-- Swagger (springdoc-openapi) -->
 		<dependency>
 		    <groupId>org.springdoc</groupId>
