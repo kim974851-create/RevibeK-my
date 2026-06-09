@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.ssafy.revibek.ai.dao.GoogleTtsDao;
+import com.ssafy.revibek.ai.dto.TtsPreset;
 import com.ssafy.revibek.ai.dto.TtsSynthesizeRequestDto;
 import com.ssafy.revibek.ai.dto.TtsSynthesizeResponseDto;
 import com.ssafy.revibek.ai.dto.TtsVoiceResponseDto;
@@ -73,6 +74,21 @@ public class GoogleTtsService {
             voiceName,
             audioEncoding
         );
+    }
+
+    public TtsSynthesizeResponseDto synthesizeWithPreset(TtsSynthesizeRequestDto request, String presetName) {
+        TtsPreset preset = TtsPreset.from(presetName);
+
+        TtsSynthesizeRequestDto merged = new TtsSynthesizeRequestDto(
+            request.text(),
+            request.languageCode() != null ? request.languageCode() : preset.languageCode,
+            request.voiceName() != null ? request.voiceName() : preset.voiceName,
+            request.speakingRate() != null ? request.speakingRate() : preset.speakingRate,
+            request.pitch() != null ? request.pitch() : preset.pitch,
+            request.audioEncoding() != null ? request.audioEncoding() : preset.audioEncoding
+        );
+
+        return synthesize(merged);
     }
 
     public List<TtsVoiceResponseDto> listVoices(String languageCode) {
