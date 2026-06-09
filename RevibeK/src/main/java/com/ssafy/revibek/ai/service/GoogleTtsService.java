@@ -34,8 +34,8 @@ public class GoogleTtsService {
     @Value("${gcp.tts.default-speaking-rate:1.0}")
     private Double defaultSpeakingRate;
 
-    @Value("${gcp.tts.default-pitch:0.0}")
-    private Double defaultPitch;
+    @Value("${gcp.tts.default-pitch:}")
+    private String defaultPitch;
 
     public TtsSynthesizeResponseDto synthesize(TtsSynthesizeRequestDto request) {
         String languageCode = StringUtils.hasText(request.languageCode())
@@ -50,9 +50,11 @@ public class GoogleTtsService {
         Double speakingRate = request.speakingRate() != null
             ? request.speakingRate()
             : defaultSpeakingRate;
-        Double pitch = request.pitch() != null
-            ? request.pitch()
-            : defaultPitch;
+        Double pitch = resolvePitch(request.pitch());
+        if (isPitchUnsupportedVoice(voiceName)) {
+            // Chirp3-HD voices currently reject pitch parameters.
+            pitch = null;
+        }
 
         GoogleTtsSynthesizeRequestDto requestDto = new GoogleTtsSynthesizeRequestDto(
             new GoogleTtsSynthesizeRequestDto.Input(request.text()),
@@ -96,5 +98,24 @@ public class GoogleTtsService {
             return "audio/ogg";
         }
         return "audio/mpeg";
+    }
+
+    private Double resolvePitch(Double requestPitch) {
+        if (requestPitch != null) {
+            return requestPitch;
+        }
+        if (!StringUtils.hasText(defaultPitch)) {
+            return null;
+        }
+        try {
+            return Double.valueOf(defaultPitch);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("gcp.tts.default-pitch 설정값이 숫자가 아닙니다: " + defaultPitch, e);
+        }
+    }
+
+    private boolean isPitchUnsupportedVoice(String voiceName) {
+        return StringUtils.hasText(voiceName)
+            && voiceName.toLowerCase().contains("chirp3-hd");
     }
 }
