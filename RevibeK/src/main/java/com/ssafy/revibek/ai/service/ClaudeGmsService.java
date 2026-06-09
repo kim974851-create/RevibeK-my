@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ClaudeGmsService {
 
-    private final RestClient.Builder restClientBuilder;
+    private final RestClient restClient = RestClient.create();
     private final GmsCreditBudgetTracker budgetTracker;
 
     @Value("${gms.api.base-url}")
@@ -64,7 +64,7 @@ public class ClaudeGmsService {
 
         ClaudeMessageResponseDto response;
         try {
-            response = restClientBuilder.build()
+            response = restClient
                 .post()
                 .uri(baseUrl)
                 .header("Content-Type", "application/json")
